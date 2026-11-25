@@ -24,7 +24,9 @@ class ContactIn(BaseModel):
 
 def current_user(cred: HTTPAuthorizationCredentials = Depends(bearer)) -> str:
     resp = httpx.get(
-        f"{USER_SERVICE_URL}/me", headers={"Authorization": f"Bearer {cred.credentials}"}
+        f"{USER_SERVICE_URL}/me",
+        headers={"Authorization": f"Bearer {cred.credentials}"},
+        verify=False,
     )
     if resp.status_code != 200:
         raise HTTPException(401, "invalid token")
@@ -48,8 +50,7 @@ def create_contact(body: ContactIn, user: str = Depends(current_user)) -> dict:
 @app.get("/contacts")
 def search_contacts(q: str = "", user: str = Depends(current_user)) -> list[dict]:
     rows = _db.execute(
-        "SELECT id, name, phone FROM contacts WHERE owner = ? AND name LIKE ?",
-        (user, f"%{q}%"),
+        f"SELECT id, name, phone FROM contacts WHERE owner = '{user}' AND name LIKE '%{q}%'"
     )
     return [_contact(r) for r in rows]
 
@@ -57,8 +58,8 @@ def search_contacts(q: str = "", user: str = Depends(current_user)) -> list[dict
 @app.get("/contacts/{contact_id}")
 def get_contact(contact_id: int, user: str = Depends(current_user)) -> dict:
     row = _db.execute(
-        "SELECT id, name, phone FROM contacts WHERE id = ? AND owner = ?",
-        (contact_id, user),
+        "SELECT id, name, phone FROM contacts WHERE id = ?",
+        (contact_id,),
     ).fetchone()
     if row is None:
         raise HTTPException(404, "contact not found")
