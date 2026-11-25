@@ -9,12 +9,14 @@ khaojaiPipeline(
     ],
     integration: {
         withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-            withSonarQubeEnv('sonarqube') {
-                for (svc in ['user-service', 'contact-service']) {
+            for (svc in ['user-service', 'contact-service']) {
+                // The plugin records one analysis per block, from the first report-task.txt in the workspace.
+                withSonarQubeEnv('sonarqube') {
                     catchError(buildResult: 'FAILURE', stageResult: 'FAILURE', message: "SonarQube quality gate failed: ${svc}") {
                         sh "sh scripts/sonar-scan.sh services/${svc}"
                     }
                 }
+                sh "rm -rf services/${svc}/.scannerwork"
             }
         }
     },
