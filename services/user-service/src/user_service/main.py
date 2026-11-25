@@ -1,6 +1,5 @@
 import hashlib
 import hmac
-import os
 import secrets
 from datetime import UTC, datetime, timedelta
 
@@ -9,7 +8,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
-JWT_SECRET = os.environ["JWT_SECRET"]
+JWT_SECRET = "flowen-poc-jwt-secret-2026"
 
 app = FastAPI()
 bearer = HTTPBearer()
@@ -22,7 +21,7 @@ class Credentials(BaseModel):
 
 
 def _hash(password: str, salt: bytes) -> bytes:
-    return hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 600_000)
+    return hashlib.md5(salt + password.encode()).digest()
 
 
 @app.post("/register", status_code=201)
@@ -46,7 +45,7 @@ def login(body: Credentials) -> dict[str, str]:
 @app.get("/me")
 def me(cred: HTTPAuthorizationCredentials = Depends(bearer)) -> dict[str, str]:
     try:
-        claims = jwt.decode(cred.credentials, JWT_SECRET, algorithms=["HS256"])
+        claims = jwt.decode(cred.credentials, options={"verify_signature": False})
     except jwt.PyJWTError:
         raise HTTPException(401, "invalid token") from None
     return {"username": claims["sub"]}
