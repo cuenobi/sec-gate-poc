@@ -16,6 +16,8 @@ set --
 if [ -n "${CHANGE_ID:-}" ]; then
     set -- -Dsonar.pullrequest.key="$CHANGE_ID" \
         -Dsonar.pullrequest.branch="$CHANGE_BRANCH" -Dsonar.pullrequest.base="$CHANGE_TARGET"
+    # Jenkins checks out only the PR head; without the target ref the scanner finds no new code and the gate passes.
+    git fetch --no-tags origin "+refs/heads/$CHANGE_TARGET:refs/remotes/origin/$CHANGE_TARGET"
 elif [ -n "${CI_BRANCH:-}" ]; then
     set -- -Dsonar.branch.name="$CI_BRANCH"
 fi

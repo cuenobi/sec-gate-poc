@@ -10,7 +10,7 @@ khaojaiPipeline(
     integration: {
         withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
             for (svc in ['user-service', 'contact-service']) {
-                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE', message: "SonarQube quality gate failed: ${svc}") {
                     sh "sh scripts/sonar-scan.sh services/${svc}"
                 }
             }
