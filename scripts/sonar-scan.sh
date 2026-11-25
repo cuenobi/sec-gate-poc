@@ -22,10 +22,10 @@ elif [ -n "${CI_BRANCH:-}" ]; then
     set -- -Dsonar.branch.name="$CI_BRANCH"
 fi
 
-# The image's default work dir /tmp/.scannerwork is root-owned; the scanner runs as the caller's uid.
+# The image's default work dir /tmp/.scannerwork is root-owned; keep it in the workspace for the Jenkins plugin.
 docker run --rm ${SONAR_NETWORK:+--network "$SONAR_NETWORK"} \
     --user "$(id -u):$(id -g)" -e HOME=/tmp -e SONAR_USER_HOME=/tmp/sonar \
-    -e SCANNER_WORKDIR_PATH=/tmp/scannerwork -e SONAR_HOST_URL -e SONAR_TOKEN \
+    -e SCANNER_WORKDIR_PATH="$PWD/$dir/.scannerwork" -e SONAR_HOST_URL -e SONAR_TOKEN \
     -v "$PWD:$PWD" -w "$PWD/$dir" \
     sonarsource/sonar-scanner-cli:12.5.0.4351_8.5.0 \
     -Dsonar.projectBaseDir="$PWD/$dir" -Dsonar.qualitygate.wait=true "$@"
