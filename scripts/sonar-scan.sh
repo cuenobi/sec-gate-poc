@@ -10,6 +10,7 @@ if [ -f .env ]; then
     export SONAR_HOST_URL="${SONAR_HOST_URL:-http://sonarqube:9000}"
     SONAR_NETWORK="${SONAR_NETWORK:-sec-gate-poc_default}"
 fi
+export SONAR_HOST_URL="${SONAR_HOST_URL:-https://sonarqube.khaojai.it}"
 
 set --
 if [ -n "${CHANGE_ID:-}" ]; then
