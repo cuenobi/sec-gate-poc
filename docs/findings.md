@@ -55,3 +55,24 @@ change that only added the three missed patterns would have passed.
 - Does the first analysis of `main` pass the gate? It passed, but the baseline had no issues, so this run does not show
   whether a first analysis treats existing issues as new.
 - The scanner exits with code 3 when the gate fails (`sonar.qualitygate.wait=true`), which fails a Jenkins `sh` step.
+
+## Jenkins (shared SonarQube)
+
+2026-11-25, job `sec-gate-poc` on https://jenkins.khaojai.it (Multibranch, GitHub source `cuenobi/sec-gate-poc`), scanning
+into https://sonarqube.khaojai.it as the user `jenkins`.
+
+| Build | Result | Gates |
+| --- | --- | --- |
+| `main` #1 | SUCCESS | both PASSED; projects created by the first scan |
+| `PR-1` #1, #2 | SUCCESS (false pass) | both PASSED with `WARN Could not find ref 'main'` |
+| `PR-1` #3 | FAILURE | both FAILED, Integration stage message `SonarQube quality gate failed: <service>` |
+
+The pull request build checks out only the PR head, so the scanner had no `main` to diff against, found no new code and
+passed. `scripts/sonar-scan.sh` now fetches `refs/heads/$CHANGE_TARGET` before a PR scan (commit 169d8eb); the PR picked
+it up after `main` was merged into `planted-vulns`, because this job builds the PR head, not the PR merged with its target.
+
+Not working yet:
+- Jenkins posts no status to the GitHub PR: the `github-token` credential can read `cuenobi/sec-gate-poc` but not write
+  commit statuses, so GitHub cannot block the merge on this result.
+- Jenkins' Coverage plugin cannot resolve source files (`Source file 'user_service/main.py' not found`), because
+  `coverage.xml` paths are relative to the service directory. Coverage numbers are recorded; source highlighting is not.
